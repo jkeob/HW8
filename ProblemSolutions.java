@@ -1,6 +1,6 @@
 /******************************************************************
  *
- *   ADD YOUR NAME / SECTION NUMBER HERE
+ *   Jacob Oh / 001
  *
  *   This java file contains the problem solutions of canFinish and
  *   numGroups methods.
@@ -72,18 +72,51 @@ class ProblemSolutions {
      * @return boolean          - True if all exams can be taken, else false.
      */
 
-    public boolean canFinish(int numExams, 
-                             int[][] prerequisites) {
-      
+    public boolean canFinish(int numExams, int[][] prerequisites) {
+
         int numNodes = numExams;  // # of nodes in graph
 
         // Build directed graph's adjacency list
-        ArrayList<Integer>[] adj = getAdjList(numExams, 
-                                        prerequisites); 
+        ArrayList<Integer>[] adj = getAdjList(numExams, prerequisites);
 
         // ADD YOUR CODE HERE - ADD YOUR NAME / SECTION AT TOP OF FILE
-        return false;
 
+        // track what we’ve fully visited and what’s in the current dfs path
+        boolean[] IFvisited = new boolean[numExams];
+        boolean[] path = new boolean[numExams];
+
+        // go through every exam
+        for (int i = 0; i < numExams; i++) {
+            // if we haven’t looked at this one yet, run dfs
+            if (!IFvisited[i]) {
+                // if dfs finds a cycle, we can’t finish all exams
+                if (canFinishHelper(i, adj, IFvisited, path)) {
+                    return false;
+                }
+            }
+        }
+
+        // if we made it through without finding a cycle, we’re good
+        return true;
+    }
+
+    private boolean canFinishHelper(int node, ArrayList<Integer>[] adj, boolean[] IFvisited, boolean[] path) {
+        if (path[node]) return true;  //cycle
+        if (IFvisited[node]) return false;  // already checked this one before, no issues
+
+        path[node] = true;  // mark this node as part of the current path
+
+        // check all the neighbors
+        for (int neighbor : adj[node]) {
+            if (canFinishHelper(neighbor, adj, IFvisited, path)) {
+                return true;  // if we find a cycle deeper in, bubble it up
+            }
+        }
+
+        path[node] = false;      // done exploring this path
+        IFvisited[node] = true;  // mark this node as fully processed, no issues
+
+        return false; // no cycles found for this node
     }
 
 
@@ -101,8 +134,8 @@ class ProblemSolutions {
     private ArrayList<Integer>[] getAdjList(
             int numNodes, int[][] edges) {
 
-        ArrayList<Integer>[] adj 
-                    = new ArrayList[numNodes];      // Create an array of ArrayList ADT
+        ArrayList<Integer>[] adj
+                = new ArrayList[numNodes];      // Create an array of ArrayList ADT
 
         for (int node = 0; node < numNodes; node++){
             adj[node] = new ArrayList<Integer>();   // Allocate empty ArrayList per node
@@ -192,7 +225,39 @@ class ProblemSolutions {
 
         // YOUR CODE GOES HERE - you can add helper methods, you do not need
         // to put all code in this method.
-        return -1;
+
+        // we’ll track who we’ve already visited
+        Set<Integer> visitedToCheck = new HashSet<>();
+        int count = 0;
+
+        // loop through every node/person
+        for (int m = 0; m < numNodes; m++) {
+            // if we haven’t seen them yet, that’s a new group
+            if (!visitedToCheck.contains(m)) {
+                count++;
+                numGroupsHelper(m, graph, visitedToCheck);
+            }
+        }
+
+        return count; // total number of separate groups
     }
+
+    // this goes through everyone connected to the node and marks them as visited
+    private void numGroupsHelper(int node, Map<Integer, List<Integer>> graph, Set<Integer> visitedToCheck) {
+        if (!visitedToCheck.contains(node)) {
+            visitedToCheck.add(node);
+
+            if (graph.containsKey(node)) {
+                List<Integer> neighborsList = graph.get(node);
+                for (int i = 0; i < neighborsList.size(); i++) {
+                    int neighborFromList = neighborsList.get(i);
+                    if (!visitedToCheck.contains(neighborFromList)) {
+                        numGroupsHelper(neighborFromList, graph, visitedToCheck);
+                    }
+                }
+            }
+        }
+    }
+
 
 }
